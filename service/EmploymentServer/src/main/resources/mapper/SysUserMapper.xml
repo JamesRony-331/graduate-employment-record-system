@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wzbc.EmploymentServer.Mapper.SysUserMapper">
+    <resultMap id="SysUserResultMap" type="com.wzbc.EmploymentServer.entity.PO.SysUserPO">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="password_algorithm" property="passwordAlgorithm"/>
+        <result column="student_uuid" property="studentUuid"/>
+        <result column="account_type" property="accountType"/>
+        <result column="counselor_id" property="counselorId"/>
+        <result column="real_name" property="realName"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="SysUserColumns">
+        id, username, password, password_algorithm, student_uuid, account_type, counselor_id, real_name, status, created_at, updated_at
+    </sql>
+
+    <select id="selectCounselorNameByUserId" resultType="string">
+        SELECT c.name
+        FROM sys_user u
+        LEFT JOIN counselor c ON c.id = u.counselor_id
+        WHERE u.id = #{userId}
+    </select>
+
+    <select id="selectCount" resultType="int">SELECT COUNT(*) FROM sys_user</select>
+
+    <resultMap id="SysUserPageResultMap" type="com.wzbc.EmploymentServer.entity.DTO.SysUser.SysUserPageDTO">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="student_uuid" property="studentUuid"/>
+        <result column="account_type" property="accountType"/>
+        <result column="counselor_id" property="counselorId"/>
+        <result column="real_name" property="realName"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <collection property="roles" ofType="com.wzbc.EmploymentServer.entity.DTO.SysUser.SysUserPageDTO$RoleDTO"
+                    notNullColumn="role_id">
+            <id column="role_id" property="id"/>
+            <result column="role_code" property="roleCode"/>
+            <result column="role_name" property="roleName"/>
+            <result column="role_status" property="status"/>
+        </collection>
+    </resultMap>
+
+    <!-- 先按用户分页，再关联多对多角色，避免多角色导致缺页或角色被截断。 -->
+    <select id="SelectByPage" resultMap="SysUserPageResultMap" resultOrdered="true">
+        SELECT u.*, r.id AS role_id, r.role_code, r.role_name, r.status AS role_status
+        FROM (
+            SELECT id, username, student_uuid, account_type, counselor_id,
+                   real_name, status, created_at, updated_at
+            FROM sys_user
+            ORDER BY id DESC
+            LIMIT #{PageQuery.pageSize} OFFSET #{PageQuery.start}
+        ) u
+        LEFT JOIN sys_user_role ur ON ur.user_id = u.id
+        LEFT JOIN sys_role r ON r.id = ur.role_id
+        ORDER BY u.id DESC, r.sort_order, r.id
+    </select>
+
+    <select id="selectById" resultMap="SysUserResultMap">
+        SELECT <include refid="SysUserColumns"/> FROM sys_user WHERE id = #{id}
+    </select>
+
+    <select id="selectByIdForUpdate" resultMap="SysUserResultMap">
+        SELECT <include refid="SysUserColumns"/> FROM sys_user WHERE id = #{id} FOR UPDATE
+    </select>
+
+    <select id="selectByUsername" resultMap="SysUserResultMap">
+        SELECT <include refid="SysUserColumns"/> FROM sys_user WHERE username = #{username}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO sys_user (username, password, password_algorithm, student_uuid, account_type, counselor_id, real_name, status, created_at, updated_at)
+        VALUES (#{username}, #{password}, #{passwordAlgorithm}, #{studentUuid}, #{accountType}, #{counselorId}, #{realName}, #{status}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <update id="updateStudentRealName">
+        UPDATE sys_user SET real_name = #{realName}, updated_at = CURRENT_TIMESTAMP
+        WHERE student_uuid = #{studentUuid} AND account_type = 'STUDENT'
+    </update>
+    <update id="update">
+        UPDATE sys_user
+        <set>
+            <if test="password != null">password = #{password}, password_algorithm = 'BCRYPT',</if>
+            <if test="realName != null">real_name = #{realName},</if>
+            updated_at = CURRENT_TIMESTAMP(3)
+        </set>
+        WHERE id = #{id} AND status = 1
+    </update>
+    <update id="upgradePassword">
+        UPDATE sys_user SET password = #{newPassword}, password_algorithm = 'BCRYPT', updated_at = CURRENT_TIMESTAMP(3)
+        WHERE id = #{id} AND password = #{oldPassword} AND password_algorithm = 'MD5' AND status = 1
+    </update>
+    <update id="softDelete">
+        UPDATE sys_user SET status = 0, updated_at = CURRENT_TIMESTAMP(3)
+        WHERE id = #{id} AND status = 1
+    </update>
+</mapper>

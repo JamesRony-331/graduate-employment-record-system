@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wzbc.EmploymentServer.Mapper.ClassMapper">
+    <resultMap id="ResultMap" type="com.wzbc.EmploymentServer.entity.PO.ClassPO">
+        <id column="id" property="id"/>
+        <result column="class_code" property="classCode"/>
+        <result column="class_name" property="className"/>
+        <result column="college_id" property="collegeId"/>
+        <result column="major_id" property="majorId"/>
+        <result column="major_name" property="majorName"/>
+        <result column="enrollment_year" property="enrollmentYear"/>
+        <result column="student_count" property="studentCount"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+    <sql id="Columns">`id`, `class_code`, `class_name`, `college_id`, `major_id`, (SELECT m.major_name FROM major m WHERE m.id = class_info.major_id) AS major_name, `enrollment_year`, `student_count`, `created_at`, `updated_at`</sql>
+    <select id="selectByDepartmentAdminUserId" resultMap="ResultMap">
+        SELECT c.id, c.class_code, c.class_name, c.college_id, c.major_id, (SELECT m.major_name FROM major m WHERE m.id = c.major_id) AS major_name,
+               c.enrollment_year, c.student_count, c.created_at, c.updated_at
+        FROM class_info c
+        WHERE EXISTS (
+            SELECT 1 FROM college_admin a
+            WHERE a.user_id = #{userId} AND a.college_id = c.college_id
+        )
+        ORDER BY c.id DESC
+    </select>
+    <select id="selectByPage" resultMap="ResultMap">
+        SELECT <include refid="Columns"/> FROM `class_info` ORDER BY id DESC
+        LIMIT #{pageQuery.pageSize} OFFSET #{pageQuery.start}
+    </select>
+    <select id="selectCount" resultType="int">
+        SELECT COUNT(*) FROM `class_info`
+    </select>
+    <select id="selectById" resultMap="ResultMap">
+        SELECT <include refid="Columns"/> FROM `class_info` WHERE id = #{id}
+    </select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO `class_info` (class_code, class_name, college_id, major_id, enrollment_year, student_count, created_at, updated_at)
+        VALUES (#{classCode}, #{className}, #{collegeId}, #{majorId}, #{enrollmentYear}, #{studentCount}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    </insert>
+    <select id="selectByIdForUpdate" resultMap="ResultMap">
+        SELECT <include refid="Columns"/> FROM class_info WHERE id = #{id} FOR UPDATE
+    </select>
+    <update id="update">
+        UPDATE `class_info`
+        <set>
+            <if test="classCode != null">`class_code` = #{classCode},</if>
+            <if test="className != null">`class_name` = #{className},</if>
+            <if test="collegeId != null">`college_id` = #{collegeId},</if>
+            <if test="majorId != null">`major_id` = #{majorId},</if>
+            <if test="enrollmentYear != null">`enrollment_year` = #{enrollmentYear},</if>
+            <if test="studentCount != null">`student_count` = #{studentCount},</if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        WHERE id = #{id}
+    </update>
+    <delete id="deleteById">
+        DELETE FROM `class_info` WHERE id = #{id}
+    </delete>
+    <select id="countReferences" resultType="int">
+        SELECT (SELECT COUNT(*) FROM student WHERE class_id = #{id})
+             + (SELECT COUNT(*) FROM employment_filing WHERE class_id = #{id})
+             + (SELECT COUNT(*) FROM counselor_class WHERE class_id = #{id})
+    </select>
+</mapper>

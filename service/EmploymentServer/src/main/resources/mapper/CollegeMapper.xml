@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wzbc.EmploymentServer.Mapper.CollegeMapper">
+    <resultMap id="ResultMap" type="com.wzbc.EmploymentServer.entity.PO.CollegePO">
+        <id column="id" property="id"/>
+        <result column="college_code" property="collegeCode"/>
+        <result column="college_name" property="collegeName"/>
+        <result column="dean_name" property="deanName"/>
+        <result column="phone" property="phone"/>
+        <result column="description" property="description"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+    <sql id="Columns">`id`, `college_code`, `college_name`, `dean_name`, `phone`, `description`, `created_at`, `updated_at`</sql>
+    <select id="selectByPage" resultMap="ResultMap">
+        SELECT <include refid="Columns"/> FROM `college` ORDER BY id DESC
+        LIMIT #{pageQuery.pageSize} OFFSET #{pageQuery.start}
+    </select>
+    <select id="selectCount" resultType="int">
+        SELECT COUNT(*) FROM `college`
+    </select>
+    <select id="selectById" resultMap="ResultMap">
+        SELECT <include refid="Columns"/> FROM `college` WHERE id = #{id}
+    </select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO `college` (college_code, college_name, dean_name, phone, description, created_at, updated_at)
+        VALUES (#{collegeCode}, #{collegeName}, #{deanName}, #{phone}, #{description}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    </insert>
+    <update id="update">
+        UPDATE `college`
+        <set>
+            <if test="collegeCode != null">`college_code` = #{collegeCode},</if>
+            <if test="collegeName != null">`college_name` = #{collegeName},</if>
+            <if test="deanName != null">`dean_name` = #{deanName},</if>
+            <if test="phone != null">`phone` = #{phone},</if>
+            <if test="description != null">`description` = #{description},</if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        WHERE id = #{id}
+    </update>
+    <delete id="deleteById">
+        DELETE FROM `college` WHERE id = #{id}
+    </delete>
+    <select id="countReferences" resultType="int">
+        SELECT (SELECT COUNT(*) FROM `class_info` WHERE college_id = #{id})
+             + (SELECT COUNT(*) FROM college_admin WHERE college_id = #{id})
+    </select>
+</mapper>

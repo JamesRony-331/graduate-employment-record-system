@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wzbc.EmploymentServer.Mapper.CounselorMapper">
+    <resultMap id="CounselorResultMap" type="com.wzbc.EmploymentServer.entity.PO.CounselorPO">
+        <id column="id" property="id"/>
+        <result column="counselor_no" property="counselorNo"/>
+        <result column="name" property="name"/>
+        <result column="gender" property="gender"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="hire_date" property="hireDate"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <sql id="CounselorColumns">
+        id, counselor_no, name, gender, phone, email, hire_date, status, created_at, updated_at
+    </sql>
+
+    <select id="selectById" resultMap="CounselorResultMap">
+        SELECT <include refid="CounselorColumns"/> FROM counselor WHERE id = #{id}
+    </select>
+
+    <select id="selectByCounselorNo" resultMap="CounselorResultMap">
+        SELECT <include refid="CounselorColumns"/> FROM counselor WHERE counselor_no = #{counselorNo}
+    </select>
+
+    <select id="selectAll" resultMap="CounselorResultMap">
+        SELECT <include refid="CounselorColumns"/> FROM counselor ORDER BY id DESC
+    </select>
+
+    <select id="SelectByPage" resultMap="CounselorResultMap">
+        SELECT <include refid="CounselorColumns"/> FROM counselor
+        ORDER BY id DESC
+        LIMIT #{PageQuery.pageSize} OFFSET #{PageQuery.start}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO counselor (counselor_no, name, gender, phone, email, hire_date, status, created_at, updated_at)
+        VALUES (#{counselorNo}, #{name}, #{gender}, #{phone}, #{email}, #{hireDate},
+                COALESCE(#{status}, 1), COALESCE(#{createdAt}, CURRENT_TIMESTAMP),
+                COALESCE(#{updatedAt}, CURRENT_TIMESTAMP))
+    </insert>
+
+    <update id="update">
+        UPDATE counselor
+        <set>
+            <if test="counselorNo != null">counselor_no = #{counselorNo},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="hireDate != null">hire_date = #{hireDate},</if>
+            <if test="status != null">status = #{status},</if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        WHERE id = #{id}
+    </update>
+</mapper>

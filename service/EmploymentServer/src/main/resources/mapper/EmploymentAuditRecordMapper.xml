@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wzbc.EmploymentServer.Mapper.EmploymentAuditRecordMapper">
+    <resultMap id="AuditMap" type="com.wzbc.EmploymentServer.entity.PO.EmploymentAuditRecordPO">
+        <id column="id" property="id"/>
+        <result column="filing_id" property="filingId"/>
+        <result column="audit_stage" property="auditStage"/>
+        <result column="auditor_id" property="auditorId"/>
+        <result column="auditor_name" property="auditorName"/>
+        <result column="auditor_role" property="auditorRole"/>
+        <result column="audit_result" property="auditResult"/>
+        <result column="audit_opinion" property="auditOpinion"/>
+        <result column="from_status" property="fromStatus"/>
+        <result column="to_status" property="toStatus"/>
+        <result column="audited_at" property="auditedAt"/>
+    </resultMap>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO employment_audit_record(filing_id,audit_stage,auditor_id,auditor_name,auditor_role,audit_result,audit_opinion,from_status,to_status,audited_at)
+        VALUES(#{filingId},#{auditStage},#{auditorId},#{auditorName},#{auditorRole},#{auditResult},#{auditOpinion},#{fromStatus},#{toStatus},#{auditedAt})
+    </insert>
+    <select id="selectById" resultMap="AuditMap">
+        SELECT * FROM employment_audit_record WHERE id=#{id}
+    </select>
+    <select id="selectByFilingId" resultMap="AuditMap">
+        SELECT * FROM employment_audit_record WHERE filing_id=#{filingId} ORDER BY audited_at,id
+    </select>
+    <select id="selectCount" resultType="int">SELECT COUNT(*) FROM employment_audit_record</select>
+    <select id="selectByPage" resultMap="AuditMap">
+        SELECT * FROM employment_audit_record ORDER BY audited_at DESC,id DESC LIMIT #{pageSize} OFFSET #{start}
+    </select>
+    <update id="update">
+        UPDATE employment_audit_record SET auditor_id=#{auditorId},auditor_name=#{auditorName},auditor_role=#{auditorRole},
+        audit_result=#{auditResult},audit_opinion=#{auditOpinion},from_status=#{fromStatus},to_status=#{toStatus}
+        WHERE id=#{id} AND filing_id=#{filingId} AND audit_stage=#{auditStage}
+    </update>
+    <delete id="deleteById">DELETE FROM employment_audit_record WHERE id=#{id}</delete>
+    <select id="countFiling" resultType="int">SELECT COUNT(*) FROM employment_filing WHERE id=#{filingId}</select>
+</mapper>

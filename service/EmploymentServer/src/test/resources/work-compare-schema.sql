@@ -1,0 +1,26 @@
+-- 对比记录：业务字段与 WorkSelectDTO 一致，空值不推断为偏好。
+CREATE TABLE IF NOT EXISTS work_compare (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    company_name VARCHAR(200) NULL,
+    company_contact VARCHAR(200) NULL,
+    `education` VARCHAR(30) NOT NULL,
+    `major` VARCHAR(100) NULL,
+    `experience` INT NOT NULL,
+    `skills` VARCHAR(20000) NOT NULL,
+    `categories` VARCHAR(20000) NOT NULL,
+    `cities` VARCHAR(20000) NOT NULL,
+    `job_type` VARCHAR(20) NOT NULL,
+    `minimum_salary` DECIMAL(10,2) NULL,
+    `expected_salary` DECIMAL(10,2) NULL,
+    `work_mode` VARCHAR(20) NULL,
+    `rest_days` VARCHAR(20) NULL,
+    `travel` VARCHAR(30) NULL,
+    `outsourcing` VARCHAR(20) NULL,
+    `priority` VARCHAR(30) NOT NULL,
+    `other` VARCHAR(1000) NULL,
+    `strict` VARCHAR(20000) NULL,
+    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+    CONSTRAINT ck_work_compare_experience CHECK (experience BETWEEN 0 AND 60),
+    CONSTRAINT ck_work_compare_salary CHECK ((minimum_salary IS NULL OR minimum_salary >= 0) AND (expected_salary IS NULL OR expected_salary >= 0) AND (minimum_salary IS NULL OR expected_salary IS NULL OR expected_salary >= minimum_salary))
+);

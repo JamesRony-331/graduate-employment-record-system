@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wzbc.EmploymentServer.Mapper.UserMapper">
+    <resultMap id="UserResultMap" type="com.wzbc.EmploymentServer.entity.PO.UserPO">
+        <id column="uuid" property="uuid"/>
+        <result column="student_no" property="studentNo"/>
+        <result column="name" property="name"/>
+        <result column="gender" property="gender"/>
+        <result column="birth_date" property="birthDate"/>
+        <result column="id_card" property="idCard"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="college_id" property="collegeId"/>
+        <result column="college" property="college"/>
+        <result column="major_id" property="majorId"/>
+        <result column="major" property="major"/>
+        <result column="class_name" property="className"/>
+        <result column="enrollment_year" property="enrollmentYear"/>
+        <result column="graduation_year" property="graduationYear"/>
+        <result column="education_level" property="educationLevel"/>
+        <result column="student_status" property="studentStatus"/>
+        <result column="address" property="address"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="class_id" property="classId"/>
+    </resultMap>
+
+    <sql id="UserColumns">
+        uuid, student_no, name, gender, birth_date, id_card, phone, email, college_id, (SELECT c.college_name FROM college c WHERE c.id = student.college_id) AS college, major_id, (SELECT m.major_name FROM major m WHERE m.id = student.major_id) AS major, (SELECT c.class_name FROM class_info c WHERE c.id = student.class_id) AS class_name, enrollment_year, graduation_year, education_level, student_status, address, created_at, updated_at, class_id
+    </sql>
+
+    <!-- uuid 由数据库自增生成，插入后回填到 UserPO.uuid。 -->
+    <insert id="InsertUser" parameterType="com.wzbc.EmploymentServer.entity.PO.UserPO"
+            useGeneratedKeys="true" keyProperty="uuid" keyColumn="uuid">
+        INSERT INTO `student`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            student_no, name, created_at, updated_at,
+            <if test="gender != null">gender,</if>
+            <if test="birthDate != null">birth_date,</if>
+            <if test="idCard != null and idCard != ''">id_card,</if>
+            <if test="phone != null and phone != ''">phone,</if>
+            <if test="email != null and email != ''">email,</if>
+            <if test="collegeId != null">college_id,</if>
+            <if test="majorId != null">major_id,</if>
+            <if test="enrollmentYear != null">enrollment_year,</if>
+            <if test="graduationYear != null">graduation_year,</if>
+            <if test="educationLevel != null and educationLevel != ''">education_level,</if>
+            <if test="studentStatus != null">student_status,</if>
+            <if test="address != null and address != ''">address,</if>
+            <if test="classId != null">class_id,</if>
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{studentNo}, #{name},
+            COALESCE(#{createdAt, jdbcType=TIMESTAMP}, CURRENT_TIMESTAMP),
+            COALESCE(#{updatedAt, jdbcType=TIMESTAMP}, CURRENT_TIMESTAMP),
+            <if test="gender != null">#{gender},</if>
+            <if test="birthDate != null">#{birthDate},</if>
+            <if test="idCard != null and idCard != ''">#{idCard},</if>
+            <if test="phone != null and phone != ''">#{phone},</if>
+            <if test="email != null and email != ''">#{email},</if>
+            <if test="collegeId != null">#{collegeId},</if>
+            <if test="majorId != null">#{majorId},</if>
+            <if test="enrollmentYear != null">#{enrollmentYear},</if>
+            <if test="graduationYear != null">#{graduationYear},</if>
+            <if test="educationLevel != null and educationLevel != ''">#{educationLevel},</if>
+            <if test="studentStatus != null">#{studentStatus},</if>
+            <if test="address != null and address != ''">#{address},</if>
+            <if test="classId != null">#{classId},</if>
+        </trim>
+    </insert>
+
+    <sql id="ManagedClassFilter">
+        <choose>
+            <when test="classIds != null and classIds.size() > 0">
+                class_id IN <foreach collection="classIds" item="id" open="(" close=")" separator=",">#{id}</foreach>
+            </when>
+            <otherwise>1 = 0</otherwise>
+        </choose>
+    </sql>
+    <select id="selectByClassIds" resultMap="UserResultMap">
+        SELECT <include refid="UserColumns"/> FROM student WHERE <include refid="ManagedClassFilter"/>
+        ORDER BY uuid DESC
+    </select>
+    <select id="countByClassIds" resultType="int">
+        SELECT COUNT(*) FROM student WHERE <include refid="ManagedClassFilter"/>
+    </select>
+    <select id="selectPageByClassIds" resultMap="UserResultMap">
+        SELECT <include refid="UserColumns"/> FROM student WHERE <include refid="ManagedClassFilter"/>
+        ORDER BY uuid DESC LIMIT #{pageSize} OFFSET #{start}
+    </select>
+    <select id="selectByClassId" resultMap="UserResultMap">
+        SELECT <include refid="UserColumns"/> FROM student
+        WHERE class_id = #{classId}
+        ORDER BY student_no, uuid
+    </select>
+
+    <select id="selectById" resultMap="UserResultMap">
+        SELECT <include refid="UserColumns"/> FROM `student` WHERE uuid = #{uuid}
+    </select>
+
+    <select id="SelectUserByPhone" resultMap="UserResultMap">
+        SELECT <include refid="UserColumns"/> FROM `student` WHERE phone = #{phone}
+    </select>
+
+    <select id="SelectUserByStudentNoOrIdCard" resultMap="UserResultMap">
+        SELECT <include refid="UserColumns"/> FROM `student`
+        WHERE 1 = 0
+        <if test="studentNo != null and studentNo.trim() != ''">
+            OR student_no = #{studentNo}
+        </if>
+        <if test="idCard != null and idCard.trim() != ''">
+            OR id_card = #{idCard}
+        </if>
+    </select>
+
+    <update id="UpdateUser" parameterType="com.wzbc.EmploymentServer.entity.PO.UserPO">
+        UPDATE `student`
+        <set>
+            <if test="studentNo != null and studentNo != ''">student_no = #{studentNo},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="birthDate != null">birth_date = #{birthDate},</if>
+            <if test="idCard != null and idCard != ''">id_card = #{idCard},</if>
+            <if test="phone != null and phone != ''">phone = #{phone},</if>
+            <if test="email != null and email != ''">email = #{email},</if>
+            <if test="collegeId != null">college_id = #{collegeId},</if>
+            <if test="majorId != null">major_id = #{majorId},</if>
+            <if test="enrollmentYear != null">enrollment_year = #{enrollmentYear},</if>
+            <if test="graduationYear != null">graduation_year = #{graduationYear},</if>
+            <if test="educationLevel != null and educationLevel != ''">education_level = #{educationLevel},</if>
+            <if test="studentStatus != null">student_status = #{studentStatus},</if>
+            <if test="address != null and address != ''">address = #{address},</if>
+            <if test="classId != null">class_id = #{classId},</if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        WHERE uuid = #{uuid}
+    </update>
+
+    <select id="SelectUserByPage" resultMap="UserResultMap">
+        SELECT <include refid="UserColumns"/> FROM `student`
+        ORDER BY uuid
+        LIMIT #{PageQuery.pageSize} OFFSET #{PageQuery.start}
+    </select>
+
+    <select id="SelectAllUser" resultMap="UserResultMap">
+        SELECT <include refid="UserColumns"/> FROM `student`
+    </select>
+
+    <select id="SelectUserCount" resultType="int">
+        SELECT COUNT(*) FROM `student`
+    </select>
+</mapper>

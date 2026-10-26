@@ -1,7 +1,9 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
 </script>
 
 <template>
-  <HelloWorld />
+<ElConfigProvider :locale="zhCn">
+  <RouterView />
+</ElConfigProvider>
 </template>

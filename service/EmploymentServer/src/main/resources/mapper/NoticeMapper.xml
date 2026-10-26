@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wzbc.EmploymentServer.Mapper.NoticeMapper">
+    <resultMap id="NoticeMap" type="com.wzbc.EmploymentServer.entity.PO.NoticePO">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="content" property="content"/>
+        <result column="notice_type" property="noticeType"/>
+        <result column="status" property="status"/>
+        <result column="is_top" property="isTop"/>
+        <result column="publisher_id" property="publisherId"/>
+        <result column="publisher_name" property="publisherName"/>
+        <result column="publish_time" property="publishTime"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+    <select id="selectPublishedById" resultMap="NoticeMap">SELECT * FROM sys_notice WHERE id=#{id} AND status=1</select>
+    <select id="countPublished" resultType="int">SELECT COUNT(*) FROM sys_notice WHERE status=1</select>
+    <select id="selectPublishedPage" resultMap="NoticeMap">
+        SELECT * FROM sys_notice WHERE status=1 ORDER BY is_top DESC,publish_time DESC,id DESC LIMIT #{pageSize} OFFSET #{start}
+    </select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_notice(title,content,notice_type,status,is_top,publisher_id,publisher_name,publish_time,created_at,updated_at)
+        VALUES(#{title},#{content},#{noticeType},#{status},#{isTop},#{publisherId},#{publisherName},#{publishTime},#{createdAt},#{updatedAt})
+    </insert>
+    <select id="selectById" resultMap="NoticeMap">SELECT * FROM sys_notice WHERE id=#{id}</select>
+    <select id="selectByIdForUpdate" resultMap="NoticeMap">SELECT * FROM sys_notice WHERE id=#{id} FOR UPDATE</select>
+    <select id="selectCount" resultType="int">SELECT COUNT(*) FROM sys_notice</select>
+    <select id="selectByPage" resultMap="NoticeMap">
+        SELECT * FROM sys_notice ORDER BY is_top DESC,created_at DESC,id DESC LIMIT #{pageSize} OFFSET #{start}
+    </select>
+    <update id="update">
+        UPDATE sys_notice SET title=#{title},content=#{content},notice_type=#{noticeType},status=#{status},is_top=#{isTop},
+        publish_time=#{publishTime},updated_at=#{updatedAt} WHERE id=#{id}
+    </update>
+    <delete id="deleteById">DELETE FROM sys_notice WHERE id=#{id}</delete>
+</mapper>

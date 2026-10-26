@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wzbc.EmploymentServer.Mapper.SysUserRoleMapper">
+    <resultMap id="BindingResultMap" type="com.wzbc.EmploymentServer.entity.PO.SysUserRolePO">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="role_id" property="roleId"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+    <select id="selectByUserId" resultMap="BindingResultMap">
+        SELECT id, user_id, role_id, created_at FROM sys_user_role WHERE user_id = #{userId} ORDER BY id
+    </select>
+    <select id="selectEnabledRolesByUserId" resultMap="com.wzbc.EmploymentServer.Mapper.SysRoleMapper.RoleResultMap">
+        SELECT r.id, r.role_name, r.role_code, r.status, r.sort_order, r.remark, r.created_at, r.updated_at
+        FROM sys_user_role ur JOIN sys_role r ON r.id = ur.role_id JOIN sys_user u ON u.id = ur.user_id
+        WHERE ur.user_id = #{userId} AND r.status = 1 AND u.status = 1
+        ORDER BY r.sort_order, r.id
+    </select>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO sys_user_role (user_id, role_id) VALUES (#{userId}, #{roleId})
+        ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)
+    </insert>
+    <delete id="deleteByUserIdAndRoleId">
+        DELETE FROM sys_user_role WHERE user_id = #{userId} AND role_id = #{roleId}
+    </delete>
+    <delete id="deleteOtherRoles">
+        DELETE FROM sys_user_role WHERE user_id = #{userId} AND role_id != #{roleId}
+    </delete>
+    <select id="countByRoleId" resultType="int">
+        SELECT COUNT(*) FROM sys_user_role WHERE role_id = #{roleId}
+    </select>
+</mapper>

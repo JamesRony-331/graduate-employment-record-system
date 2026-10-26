@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wzbc.EmploymentServer.Mapper.DepartmentAdminMapper">
+    <resultMap id="RecordMap" type="com.wzbc.EmploymentServer.entity.PO.DepartmentAdminPO">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="college_id" property="collegeId"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+    <resultMap id="DetailMap" type="com.wzbc.EmploymentServer.entity.VO.DepartmentAdmin.DepartmentAdminVO">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="college_id" property="collegeId"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="username" property="username"/>
+        <result column="status" property="status"/>
+        <result column="college_name" property="collegeName"/>
+    </resultMap>
+    <sql id="DetailQuery">
+        SELECT a.id, a.user_id, a.name, a.college_id, a.created_at, a.updated_at,
+               u.username, u.status, c.college_name
+        FROM college_admin a LEFT JOIN sys_user u ON u.id = a.user_id
+        LEFT JOIN college c ON c.id = a.college_id
+    </sql>
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO college_admin (user_id, name, college_id, created_at, updated_at)
+        VALUES (#{userId}, #{name}, #{collegeId}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    </insert>
+    <select id="selectById" resultMap="RecordMap">
+        SELECT id, user_id, name, college_id, created_at, updated_at FROM college_admin WHERE id = #{id}
+    </select>
+    <select id="selectByIdForUpdate" resultMap="RecordMap">
+        SELECT id, user_id, name, college_id, created_at, updated_at FROM college_admin WHERE id = #{id} FOR UPDATE
+    </select>
+    <select id="selectDetail" resultMap="DetailMap">
+        <include refid="DetailQuery"/> WHERE a.id = #{id}
+    </select>
+    <select id="selectByPage" resultMap="DetailMap">
+        <include refid="DetailQuery"/> ORDER BY a.id DESC
+        LIMIT #{pageQuery.pageSize} OFFSET #{pageQuery.start}
+    </select>
+    <select id="selectCount" resultType="int">SELECT COUNT(*) FROM college_admin</select>
+    <update id="update">
+        UPDATE college_admin
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="collegeId != null">college_id = #{collegeId},</if>
+            updated_at = CURRENT_TIMESTAMP
+        </set>
+        WHERE id = #{id}
+    </update>
+    <delete id="deleteById">DELETE FROM college_admin WHERE id = #{id}</delete>
+</mapper>

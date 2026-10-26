@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wzbc.EmploymentServer.Mapper.EmploymentFilingMapper">
+    <resultMap id="FilingResultMap" type="com.wzbc.EmploymentServer.entity.PO.EmploymentFilingPO">
+        <id column="id" property="id"/>
+        <result column="application_no" property="applicationNo"/>
+        <result column="student_uuid" property="studentUuid"/>
+        <result column="student_no" property="studentNo"/>
+        <result column="student_name" property="studentName"/>
+        <result column="college" property="college"/>
+        <result column="major" property="major"/>
+        <result column="class_id" property="classId"/>
+        <result column="class_name" property="className"/>
+        <result column="graduation_year" property="graduationYear"/>
+        <result column="application_type" property="applicationType"/>
+        <result column="previous_filing_id" property="previousFilingId"/>
+        <result column="change_reason" property="changeReason"/>
+        <result column="destination_type" property="destinationType"/>
+        <result column="company_name" property="companyName"/>
+        <result column="company_credit_code" property="companyCreditCode"/>
+        <result column="company_industry" property="companyIndustry"/>
+        <result column="company_nature" property="companyNature"/>
+        <result column="job_title" property="jobTitle"/>
+        <result column="work_province" property="workProvince"/>
+        <result column="work_city" property="workCity"/>
+        <result column="work_address" property="workAddress"/>
+        <result column="monthly_salary" property="monthlySalary"/>
+        <result column="signed_date" property="signedDate"/>
+        <result column="contact_phone" property="contactPhone"/>
+        <result column="contact_email" property="contactEmail"/>
+        <result column="destination_details" property="destinationDetails"/>
+        <result column="materials" property="materials"/>
+        <result column="remark" property="remark"/>
+        <result column="status" property="status"/>
+        <result column="submitted_at" property="submittedAt"/>
+        <result column="archived_at" property="archivedAt"/>
+        <result column="version" property="version"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="pending_student_uuid" property="pendingStudentUuid"/>
+    </resultMap>
+
+    <!-- 当前学生班级决定管理范围；EXISTS 避免重复分配产生重复备案记录。 -->
+    <select id="selectManagedFilings" resultMap="FilingResultMap">
+        SELECT f.*
+        FROM employment_filing f
+        JOIN student s ON s.uuid = f.student_uuid
+        JOIN class_info c ON c.id = s.class_id
+        JOIN sys_user u ON u.id = #{userId} AND u.status = 1 AND u.account_type = 'STAFF'
+        WHERE f.status = #{status}
+        <choose>
+            <when test="department">
+                AND EXISTS (
+                    SELECT 1 FROM college_admin a
+                    JOIN college co ON co.id = a.college_id
+                    WHERE a.user_id = u.id AND co.id = c.college_id
+                )
+            </when>
+            <otherwise>
+                AND EXISTS (
+                    SELECT 1 FROM counselor_class cc
+                    JOIN counselor counselor ON counselor.id = cc.counselor_id
+                    WHERE cc.counselor_id = u.counselor_id AND cc.class_id = c.id
+                )
+            </otherwise>
+        </choose>
+        ORDER BY f.submitted_at DESC, f.id DESC
+    </select>
+
+    <select id="selectByIdForUpdate" resultMap="FilingResultMap">
+        SELECT * FROM employment_filing WHERE id=#{id} FOR UPDATE
+    </select>
+    <update id="updateReviewStatus">
+        UPDATE employment_filing SET status=#{toStatus},version=version+1,updated_at=CURRENT_TIMESTAMP(3),
+        archived_at=CASE WHEN #{toStatus}=30 THEN CURRENT_TIMESTAMP(3) ELSE NULL END
+        WHERE id=#{id} AND version=#{version} AND status=#{fromStatus}
+    </update>
+    <sql id="FilingColumns">
+        id, application_no, student_uuid, student_no, student_name, college, major, class_id, class_name, graduation_year, application_type, previous_filing_id, change_reason, destination_type, company_name, company_credit_code, company_industry, company_nature, job_title, work_province, work_city, work_address, monthly_salary, signed_date, contact_phone, contact_email, destination_details, materials, remark, status, submitted_at, archived_at, version, created_at, updated_at, pending_student_uuid
+    </sql>
+
+    <!-- 主键由数据库生成；pending_student_uuid 为生成列，不参与写入。 -->
+    <insert id="InsertEmploymentFiling" parameterType="com.wzbc.EmploymentServer.entity.PO.EmploymentFilingPO"
+            useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO `employment_filing`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            created_at, updated_at,
+            <if test="applicationNo != null">application_no,</if>
+            <if test="studentUuid != null">student_uuid,</if>
+            <if test="studentNo != null">student_no,</if>
+            <if test="studentName != null">student_name,</if>
+            <if test="college != null">college,</if>
+            <if test="major != null">major,</if>
+            <if test="classId != null">class_id,</if>
+            <if test="className != null">class_name,</if>
+            <if test="graduationYear != null">graduation_year,</if>
+            <if test="applicationType != null">application_type,</if>
+            <if test="previousFilingId != null">previous_filing_id,</if>
+            <if test="changeReason != null">change_reason,</if>
+            <if test="destinationType != null">destination_type,</if>
+            <if test="companyName != null">company_name,</if>
+            <if test="companyCreditCode != null">company_credit_code,</if>
+            <if test="companyIndustry != null">company_industry,</if>
+            <if test="companyNature != null">company_nature,</if>
+            <if test="jobTitle != null">job_title,</if>
+            <if test="workProvince != null">work_province,</if>
+            <if test="workCity != null">work_city,</if>
+            <if test="workAddress != null">work_address,</if>
+            <if test="monthlySalary != null">monthly_salary,</if>
+            <if test="signedDate != null">signed_date,</if>
+            <if test="contactPhone != null">contact_phone,</if>
+            <if test="contactEmail != null">contact_email,</if>
+            <if test="destinationDetails != null">destination_details,</if>
+            <if test="materials != null">materials,</if>
+            <if test="remark != null">remark,</if>
+            <if test="status != null">status,</if>
+            <if test="submittedAt != null">submitted_at,</if>
+            <if test="archivedAt != null">archived_at,</if>
+            <if test="version != null">version,</if>
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            COALESCE(#{createdAt, jdbcType=TIMESTAMP}, CURRENT_TIMESTAMP(3)),
+            COALESCE(#{updatedAt, jdbcType=TIMESTAMP}, CURRENT_TIMESTAMP(3)),
+            <if test="applicationNo != null">#{applicationNo},</if>
+            <if test="studentUuid != null">#{studentUuid},</if>
+            <if test="studentNo != null">#{studentNo},</if>
+            <if test="studentName != null">#{studentName},</if>
+            <if test="college != null">#{college},</if>
+            <if test="major != null">#{major},</if>
+            <if test="classId != null">#{classId},</if>
+            <if test="className != null">#{className},</if>
+            <if test="graduationYear != null">#{graduationYear},</if>
+            <if test="applicationType != null">#{applicationType},</if>
+            <if test="previousFilingId != null">#{previousFilingId},</if>
+            <if test="changeReason != null">#{changeReason},</if>
+            <if test="destinationType != null">#{destinationType},</if>
+            <if test="companyName != null">#{companyName},</if>
+            <if test="companyCreditCode != null">#{companyCreditCode},</if>
+            <if test="companyIndustry != null">#{companyIndustry},</if>
+            <if test="companyNature != null">#{companyNature},</if>
+            <if test="jobTitle != null">#{jobTitle},</if>
+            <if test="workProvince != null">#{workProvince},</if>
+            <if test="workCity != null">#{workCity},</if>
+            <if test="workAddress != null">#{workAddress},</if>
+            <if test="monthlySalary != null">#{monthlySalary},</if>
+            <if test="signedDate != null">#{signedDate},</if>
+            <if test="contactPhone != null">#{contactPhone},</if>
+            <if test="contactEmail != null">#{contactEmail},</if>
+            <if test="destinationDetails != null">#{destinationDetails},</if>
+            <if test="materials != null">#{materials},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="status != null">#{status},</if>
+            <if test="submittedAt != null">#{submittedAt},</if>
+            <if test="archivedAt != null">#{archivedAt},</if>
+            <if test="version != null">#{version},</if>
+        </trim>
+    </insert>
+
+    <delete id="DeleteEmploymentFiling">
+        DELETE FROM `employment_filing` WHERE id = #{id}
+    </delete>
+
+    <!-- 非 null 字段参与更新；提交时间、创建时间保持不变。 -->
+    <update id="UpdateEmploymentFiling" parameterType="com.wzbc.EmploymentServer.entity.PO.EmploymentFilingPO">
+        UPDATE `employment_filing`
+        <set>
+            <if test="applicationNo != null">application_no = #{applicationNo},</if>
+            <if test="studentUuid != null">student_uuid = #{studentUuid},</if>
+            <if test="studentNo != null">student_no = #{studentNo},</if>
+            <if test="studentName != null">student_name = #{studentName},</if>
+            <if test="college != null">college = #{college},</if>
+            <if test="major != null">major = #{major},</if>
+            <if test="classId != null">class_id = #{classId},</if>
+            <if test="className != null">class_name = #{className},</if>
+            <if test="graduationYear != null">graduation_year = #{graduationYear},</if>
+            <if test="applicationType != null">application_type = #{applicationType},</if>
+            <if test="previousFilingId != null">previous_filing_id = #{previousFilingId},</if>
+            <if test="changeReason != null">change_reason = #{changeReason},</if>
+            <if test="destinationType != null">destination_type = #{destinationType},</if>
+            <if test="companyName != null">company_name = #{companyName},</if>
+            <if test="companyCreditCode != null">company_credit_code = #{companyCreditCode},</if>
+            <if test="companyIndustry != null">company_industry = #{companyIndustry},</if>
+            <if test="companyNature != null">company_nature = #{companyNature},</if>
+            <if test="jobTitle != null">job_title = #{jobTitle},</if>
+            <if test="workProvince != null">work_province = #{workProvince},</if>
+            <if test="workCity != null">work_city = #{workCity},</if>
+            <if test="workAddress != null">work_address = #{workAddress},</if>
+            <if test="monthlySalary != null">monthly_salary = #{monthlySalary},</if>
+            <if test="signedDate != null">signed_date = #{signedDate},</if>
+            <if test="contactPhone != null">contact_phone = #{contactPhone},</if>
+            <if test="contactEmail != null">contact_email = #{contactEmail},</if>
+            <if test="destinationDetails != null">destination_details = #{destinationDetails},</if>
+            <if test="materials != null">materials = #{materials},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="archivedAt != null">archived_at = #{archivedAt},</if>
+            updated_at = CURRENT_TIMESTAMP(3),
+            version = version + 1
+        </set>
+        WHERE id = #{id} AND version = #{version}
+    </update>
+
+    <select id="SelectEmploymentFilingById" resultMap="FilingResultMap">
+        SELECT <include refid="FilingColumns"/> FROM `employment_filing` WHERE id = #{id}
+        ORDER BY id DESC
+    </select>
+
+    <select id="SelectAllEmploymentFiling" resultMap="FilingResultMap">
+        SELECT <include refid="FilingColumns"/> FROM `employment_filing`
+        ORDER BY id DESC
+    </select>
+
+    <select id="SelectEmploymentFilingByStudent" resultMap="FilingResultMap">
+        SELECT <include refid="FilingColumns"/> FROM `employment_filing` WHERE student_uuid = #{studentUuid}
+        ORDER BY submitted_at DESC, id DESC
+    </select>
+
+    <select id="SelectEmploymentFilingByClass" resultMap="FilingResultMap">
+        SELECT <include refid="FilingColumns"/> FROM `employment_filing` WHERE class_id = #{classId}
+        ORDER BY id DESC
+    </select>
+
+    <select id="selectLastFilingByStudentUuid" resultMap="FilingResultMap">
+        SELECT <include refid="FilingColumns"/> FROM `employment_filing`
+        WHERE student_uuid = #{studentUuid}
+        ORDER BY submitted_at DESC, id DESC
+    </select>
+
+</mapper>

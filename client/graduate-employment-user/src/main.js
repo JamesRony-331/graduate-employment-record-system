@@ -1,5 +1,26 @@
-import { createApp } from 'vue'
+import
+{
+  createApp
+}
+from 'vue'
+import
+{
+  ElConfigProvider,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElButton,
+  ElIcon
+}
+from 'element-plus'
+import 'element-plus/dist/index.css'
+import router from './router'
 import './style.css'
 import App from './App.vue'
 
-createApp(App).mount('#app')
+const app = createApp(App)
+for (const component of [ElConfigProvider, ElForm, ElFormItem, ElInput, ElButton, ElIcon])
+{
+  app.component(component.name, component)
+}
+app.use(router).mount('#app')

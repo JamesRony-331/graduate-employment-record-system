@@ -35,6 +35,8 @@ cp .env.example .env
 DB_URL=jdbc:mysql://localhost:3306/example
 DB_USERNAME=root
 DB_PASSWORD=你的数据库密码
+ARK_API_KEY=你的AI服务密钥
+JWT_SECRET=随机生成的Base64签名密钥
 ```
 
 请把数据库地址、数据库名、用户名和密码替换为本机的实际信息。不要提交 `.env` 文件或真实密码。
@@ -73,3 +75,5 @@ npm run dev
 - `.env.example` 只用于说明配置格式，可以提交到 Git。
 - `.env` 保存本机真实配置，已经被 `.gitignore` 排除。
 - 修改 `.env` 后需要重新启动后端服务。
+
+JWT 签名密钥可使用 `openssl rand -base64 48` 生成，保存到后端 `.env` 的 `JWT_SECRET`。测试使用独立测试密钥，不会读取真实签名密钥。

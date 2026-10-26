@@ -1,0 +1,23 @@
+{
+  "indent_size": 2,
+  "indent_char": " ",
+  "brace_style": "expand",
+  "preserve_newlines": true,
+  "max_preserve_newlines": 2,
+  "wrap_line_length": 100,
+  "end_with_newline": true,
+  "wrap_attributes": "force-expand-multiline",
+  "extra_liners": [],
+  "indent_scripts": "normal",
+  "templating": [
+    "handlebars"
+  ],
+  "unformatted": [
+    "pre",
+    "textarea"
+  ],
+  "content_unformatted": [
+    "pre",
+    "textarea"
+  ]
+}
